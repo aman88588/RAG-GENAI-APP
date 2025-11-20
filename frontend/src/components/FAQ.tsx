@@ -7,7 +7,7 @@ const FAQ = () => {
   const faqs = [
     {
       question: 'What file formats do you support?',
-      answer: 'Currently, we support PDF files up to 100MB in size. We plan to add support for Word documents, PowerPoint presentations, and other formats in the future.'
+      answer: 'Currently, we support PDF files up to 10MB in size. We plan to add support for Word documents, PowerPoint presentations, and other formats in the future.'
     },
     {
       question: 'How accurate are the AI responses?',
@@ -19,7 +19,7 @@ const FAQ = () => {
     },
     {
       question: 'What\'s the maximum document size?',
-      answer: 'You can upload PDFs up to 100MB in size. For documents with hundreds of pages, processing may take a few minutes, but there\'s no limit on the number of pages.'
+      answer: 'You can upload PDFs up to 10MB in size. For documents with hundreds of pages, processing may take a few minutes, but there\'s no limit on the number of pages.'
     }
   ];
 
