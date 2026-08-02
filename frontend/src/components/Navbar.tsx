@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, FileText } from 'lucide-react';
+import { Menu, X, Mic2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import UserProfile from './UserProfile';
 
@@ -25,9 +25,9 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-blue-600 p-2 rounded-lg">
-              <FileText className="h-6 w-6 text-white" />
+              <Mic2 className="h-6 w-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-black">ChatDoc</span>
+            <span className="text-2xl font-bold text-black">CallInsight For Hike Edu</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -51,13 +51,13 @@ const Navbar = () => {
                   <UserProfile />
                 ) : (
                   <>
-                    <Link 
+                    <Link
                       to="/signin"
                       className="text-black hover:text-blue-600 transition-colors duration-200 text-sm font-medium"
                     >
                       Sign In
                     </Link>
-                    <Link 
+                    <Link
                       to="/signup"
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
                     >
@@ -94,7 +94,7 @@ const Navbar = () => {
                 </button>
               ))}
               <hr className="my-2 border-gray-200" />
-              
+
               {!isLoading && (
                 <>
                   {isAuthenticated ? (
@@ -103,14 +103,14 @@ const Navbar = () => {
                     </div>
                   ) : (
                     <>
-                      <Link 
+                      <Link
                         to="/signin"
                         className="block w-full text-left px-3 py-2 text-black hover:text-blue-600 transition-colors duration-200 text-sm font-medium"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Sign In
                       </Link>
-                      <Link 
+                      <Link
                         to="/signup"
                         className="block w-full text-left px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
                         onClick={() => setIsMenuOpen(false)}

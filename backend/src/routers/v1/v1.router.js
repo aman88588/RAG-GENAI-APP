@@ -1,13 +1,14 @@
-const express = require('express');
-const pdfRouter = require('./pdf.router');
-const queryRouter = require('./query.router');
-const authRouter = require('./auth.router');
+const express = require("express");
+
+const authRouter = require("./auth.router");
+const callsRouter = require("../calls.router");
 
 const v1Router = express.Router();
 
-v1Router.use('/pdf', pdfRouter);
-v1Router.use('/pdf', queryRouter);
-v1Router.use('/auth', authRouter);
+// ── Auth routes (no JWT required — signup/signin are public) ──
+v1Router.use("/auth", authRouter);
 
+// ── Call analysis routes (JWT required per route) ──
+v1Router.use("/calls", callsRouter);
 
 module.exports = v1Router;

@@ -1,285 +1,148 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, Mic2, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { authApi } from '../services/api.service';
 
-const SignIn = () => {
+export default function SignIn() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [serverError, setServerError] = useState('');
 
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!formData.email.trim()) e.email = 'Email is required.';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) e.email = 'Enter a valid email address.';
+    if (!formData.password) e.password = 'Password is required.';
+    else if (formData.password.length < 6) e.password = 'Password must be at least 6 characters.';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setErrors(prev => ({ ...prev, [e.target.name]: '' }));
+    setServerError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) return;
-
+    if (!validate()) return;
     setIsLoading(true);
-
+    setServerError('');
     try {
-      const apiUrl = import.meta.env.VITE_BACKEND_API;
-      console.log('API URL:', apiUrl);
-      const response = await fetch(`${apiUrl}/api/v1/auth/signin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (jsonError) {
-        console.error('JSON parsing error:', jsonError);
-        data = { message: 'Invalid response from server' };
-      }
-
-      if (response.ok && data.success) {
-        toast({
-          title: "Success!",
-          description: "You have been signed in successfully.",
-        });
-
-        // Use AuthContext login function to properly set authentication state
-        if (data.data?.token && data.data?.user) {
-          login(data.data.user, data.data.token);
-        }
-
-        // Navigate to dashboard
+      const data = await authApi.signin({ email: formData.email.trim(), password: formData.password });
+      if (data.success && data.data?.token && data.data?.user) {
+        login(data.data.user, data.data.token);
         navigate('/dashboard');
-      } else {
-        console.error('Sign in failed:', data);
-        console.log('Response status:', response.status);
-        console.log('Response data:', data);
-        
-        // Handle specific error cases
-        let message = "Invalid email or password";
-        if (data?.message) {
-          message = data.message;
-        } else if (response.status === 401) {
-          message = "Invalid email or password";
-        } else if (response.status === 400) {
-          message = data?.message || "Invalid input data";
-        } else if (response.status === 405) {
-          message = "Server endpoint not found. Please check if the backend is running.";
-        } else if (response.status === 404) {
-          message = "Server endpoint not found. Please check the API configuration.";
-        } else if (response.status === 500) {
-          message = "Server error. Please try again later.";
-        }
-        
-        toast({
-          title: "Error",
-          description: message,
-          variant: "destructive",
-        });
       }
-
-    } catch (error) {
-      console.error('Sign in error:', error);
-      toast({
-        title: "Error",
-        description: "Unable to connect to server. Please try again.",
-        variant: "destructive",
-      });
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Sign in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white flex">
-      {/* Left Side - Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-50 to-blue-100 items-center justify-center p-12">
-        <div className="max-w-md text-center">
-          <div className="mb-8">
-            <div className="bg-blue-600 p-6 rounded-3xl w-fit mx-auto mb-6 shadow-xl">
-              <FileText className="h-16 w-16 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              Welcome Back to ChatDoc
-            </h2>
-            <p className="text-gray-600 text-lg leading-relaxed">
-              Continue your journey of smart document conversations.
-              Sign in to access your PDFs and chat history.
-            </p>
+    <div className="flex min-h-screen bg-white">
+      {/* Left illustration panel */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-700 p-12">
+        <div className="max-w-md text-center text-white">
+          <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 backdrop-blur shadow-xl">
+            <Mic2 className="h-12 w-12 text-white" />
           </div>
+          <h2 className="mb-4 text-3xl font-extrabold">Welcome back to CallInsight</h2>
+          <p className="text-lg leading-relaxed text-blue-100">
+            Review your MP3 sales calls with structured AI insights — transcripts, lead scores, and coaching.
+          </p>
 
-          {/* Illustration Elements */}
-          <div className="relative">
-            <div className="bg-white rounded-xl p-6 shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-              </div>
-              <div className="space-y-2">
-                <div className="h-2 bg-gray-200 rounded w-full"></div>
-                <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-2 bg-blue-200 rounded w-full"></div>
-                <div className="h-2 bg-blue-200 rounded w-1/2"></div>
-              </div>
-            </div>
+          {/* Decorative card */}
+          <div className="mt-10 rounded-2xl bg-white/10 p-5 text-left text-sm backdrop-blur">
+            <p className="font-semibold text-white/80 mb-2">🔥 Hot Lead Detected</p>
+            <p className="text-white/60 leading-relaxed">Customer shows strong buying intent. Recommended follow-up within 24h.</p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="max-w-md w-full">
-          {/* Header */}
-          <div className="mb-8">
-            <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors duration-200 mb-6">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Link>
+      {/* Right form panel */}
+      <div className="flex w-full items-center justify-center p-8 lg:w-1/2">
+        <div className="w-full max-w-md">
+          <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+            <ArrowLeft className="h-4 w-4" /> Back to Home
+          </Link>
 
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <FileText className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-black">ChatDoc</span>
+          <div className="mb-2 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
+              <Mic2 className="h-5 w-5 text-white" />
             </div>
-
-            <h1 className="text-3xl font-bold text-black mb-2">Welcome back</h1>
-            <p className="text-gray-600">Sign in to your account to continue</p>
+            <span className="text-xl font-bold text-slate-900">CallInsight</span>
           </div>
 
+          <h1 className="mt-6 text-3xl font-extrabold text-slate-900">Sign in</h1>
+          <p className="mt-1 text-sm text-slate-500">Welcome back — let's dig into your calls.</p>
 
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {errors.general && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                {errors.general}
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+            {serverError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {serverError}
               </div>
             )}
 
-            {/* Email Field */}
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
-                    errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
-                  }`}
-                  placeholder="Enter your email"
+                  id="email" name="email" type="email"
+                  value={formData.email} onChange={handleChange}
+                  placeholder="you@example.com"
+                  className={`input-field pl-10 ${errors.email ? 'input-error' : ''}`}
+                  autoComplete="email"
                 />
               </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
+              {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
-                    errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
-                  }`}
-                  placeholder="Enter your password"
+                  id="password" name="password" type={showPassword ? 'text' : 'password'}
+                  value={formData.password} onChange={handleChange}
+                  placeholder="••••••••"
+                  className={`input-field pl-10 pr-10 ${errors.password ? 'input-error' : ''}`}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
+              {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 hover:shadow-lg"
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+            <button type="submit" disabled={isLoading} className="btn-primary w-full py-3 text-base">
+              {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</> : 'Sign In'}
             </button>
 
-            {/* Sign Up Link */}
-            <div className="text-center">
-              <p className="text-gray-600">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200">
-                  Sign Up
-                </Link>
-              </p>
-            </div>
+            <p className="text-center text-sm text-slate-500">
+              Don't have an account?{' '}
+              <Link to="/signup" className="font-semibold text-blue-600 hover:text-blue-700">Sign Up</Link>
+            </p>
           </form>
         </div>
       </div>
     </div>
   );
-};
-
-export default SignIn;
+}

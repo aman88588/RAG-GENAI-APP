@@ -1,24 +1,24 @@
 import React from 'react';
-import { Upload, MessageCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { Upload, Mic2, CheckCircle, ArrowRight } from 'lucide-react';
 
 const Workflow = () => {
   const steps = [
     {
       icon: Upload,
-      title: 'Upload Your PDF',
-      description: 'Drag and drop or select your PDF document. We support files up to 100MB.',
+      title: 'Upload MP3',
+      description: 'Add a call recording from your sales conversation.',
       color: 'bg-blue-100 text-blue-600'
     },
     {
-      icon: MessageCircle,
-      title: 'Ask Questions in Natural Language',
-      description: 'Type your question just like you would ask a colleague. No technical jargon needed.',
+      icon: Mic2,
+      title: 'Transcribe the Call',
+      description: 'Convert the audio into a speaker-aware transcript.',
       color: 'bg-green-100 text-green-600'
     },
     {
       icon: CheckCircle,
-      title: 'Get Smart, Source-Based Answers',
-      description: 'Receive accurate answers with page references and relevant quotes from your document.',
+      title: 'Review JSON Insights',
+      description: 'Get summary, intent, lead quality, mistakes, and suggestions.',
       color: 'bg-purple-100 text-purple-600'
     }
   ];
@@ -32,7 +32,7 @@ const Workflow = () => {
             <span className="text-blue-600"> Works</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Get insights from your documents in three simple steps. No learning curve required.
+            Analyze recorded customer conversations in three simple steps.
           </p>
         </div>
 

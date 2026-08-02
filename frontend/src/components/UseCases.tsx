@@ -3,18 +3,18 @@ const UseCases = () => {
   const useCases = [
     {
       image: 'https://cdn.pixabay.com/video/2020/09/13/49811-458438860_large.mp4',
-      title: 'Doctors',
-      subtitle: 'Medical Research Made Simple'
+      title: 'Sales Teams',
+      subtitle: 'Coach Every Conversation'
     },
     {
       image: 'https://cdn.pixabay.com/video/2024/06/06/215500_large.mp4',
-      title: 'Researchers',
-      subtitle: 'Academic Excellence Accelerated'
+      title: 'Revenue Leaders',
+      subtitle: 'Spot Lead Quality Fast'
     },
     {
       image: 'https://cdn.pixabay.com/video/2024/03/15/204306-923909642_large.mp4',
-      title: 'Business Analysts',
-      subtitle: 'Strategic Insights Unlocked'
+      title: 'Call QA Teams',
+      subtitle: 'Find Missed Opportunities'
     }
   ];
 
@@ -24,11 +24,10 @@ const UseCases = () => {
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-black mb-6">
             Who Uses
-            <span className="text-blue-600"> ChatDoc</span>
+            <span className="text-blue-600"> CallInsight</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Whether you're saving lives, advancing knowledge, or driving business growth,
-            ChatDoc helps you work smarter, not harder.
+            Sales and quality teams use CallInsight to review conversations faster and turn every recording into coaching data.
           </p>
         </div>
 

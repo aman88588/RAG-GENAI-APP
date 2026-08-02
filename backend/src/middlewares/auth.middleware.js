@@ -1,14 +1,26 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
-const AuthMiddleware = (req, res, next) => {
+/**
+ * Middleware: verifyToken
+ * Validates the Bearer JWT in the Authorization header.
+ * On success: attaches req.userId, req.userEmail, req.userRole
+ * On failure: returns 401.
+ */
+const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ success: false, message: 'Unauthorized: Token missing' });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ success: false, message: "Unauthorized: Token missing or malformed." });
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.split(" ")[1];
+
+    if (!JWT_SECRET_KEY) {
+        console.error("[AuthMiddleware] JWT_SECRET_KEY is not set.");
+        return res.status(500).json({ success: false, message: "Server misconfiguration: JWT secret not set." });
+    }
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET_KEY);
@@ -17,8 +29,14 @@ const AuthMiddleware = (req, res, next) => {
         req.userRole = decoded.role;
         next();
     } catch (err) {
-        return res.status(401).json({ success: false, message: 'Unauthorized: Invalid token' });
+        if (err.name === "TokenExpiredError") {
+            return res.status(401).json({ success: false, message: "Unauthorized: Token has expired." });
+        }
+        return res.status(401).json({ success: false, message: "Unauthorized: Invalid token." });
     }
 };
 
-module.exports = {AuthMiddleware};
+// Keep backward-compatible alias for any legacy imports
+const AuthMiddleware = verifyToken;
+
+module.exports = { verifyToken, AuthMiddleware };

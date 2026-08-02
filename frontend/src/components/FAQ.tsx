@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -7,19 +7,19 @@ const FAQ = () => {
   const faqs = [
     {
       question: 'What file formats do you support?',
-      answer: 'Currently, we support PDF files up to 10MB in size. We plan to add support for Word documents, PowerPoint presentations, and other formats in the future.'
+      answer: 'The active pipeline supports MP3 call recordings up to 50MB.'
     },
     {
-      question: 'How accurate are the AI responses?',
-      answer: 'Our AI achieves high accuracy by using advanced language models specifically trained for document analysis. All responses include page references so you can verify the information directly from your document.'
+      question: 'What does the analysis return?',
+      answer: 'Each completed analysis returns a summary, customer intent, lead quality with reasoning, sales agent mistakes, and improvement suggestions.'
     },
     {
       question: 'Is my data safe and private?',
-      answer: 'Absolutely. Your documents are encrypted during upload and processing. We don\'t store your documents permanently, and your data is never used to train our models. You can delete your data at any time.'
+      answer: 'Call analyses are associated with your account, and uploaded temporary audio files are removed after processing. You can delete stored analyses from the dashboard.'
     },
     {
-      question: 'What\'s the maximum document size?',
-      answer: 'You can upload PDFs up to 10MB in size. For documents with hundreds of pages, processing may take a few minutes, but there\'s no limit on the number of pages.'
+      question: 'How are poor recordings handled?',
+      answer: 'The transcript marks inaudible or poor-quality sections, and the insights note limitations when the conversation is incomplete or unclear.'
     }
   ];
 
@@ -36,7 +36,7 @@ const FAQ = () => {
             <span className="text-blue-600"> Questions</span>
           </h2>
           <p className="text-xl text-gray-600">
-            Everything you need to know about ChatDoc and how it works.
+            Everything you need to know about CallInsight and how it works.
           </p>
         </div>
 

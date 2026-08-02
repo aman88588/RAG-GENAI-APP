@@ -1,50 +1,35 @@
 const mongoose = require("mongoose");
 
-const UserSchema = new mongoose.Schema({
-    fullName: {
-        type: String,
-        required: [true, "Full Name is required"],
-        trim: true,
-        minlength: [3, "Full Name must be at least 3 characters long"],
-        maxlength: [50, "Full Name cannot exceed 50 characters"],
-        unique: true
+const UserSchema = new mongoose.Schema(
+    {
+        fullName: {
+            type: String,
+            required: [true, "Full name is required"],
+            trim: true,
+            minlength: [3, "Full name must be at least 3 characters"],
+            maxlength: [50, "Full name cannot exceed 50 characters"],
+        },
+        email: {
+            type: String,
+            required: [true, "Email is required"],
+            unique: true,
+            lowercase: true,
+            trim: true,
+        },
+        password: {
+            type: String,
+            required: [true, "Password is required"],
+            select: false, // Never returned by default — must be explicitly selected
+        },
+        role: {
+            type: String,
+            enum: ["user", "admin"],
+            default: "user",
+        },
     },
-    email: {
-        type: String,
-        required: [true, "Email is required"],
-        trim: true,
-        lowercase: true,
-        unique: true,
-        match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"]
-    },
-    password: {
-        type: String,
-        required: [true, "Password is required"],
-        minlength: [6, "Password must be at least 6 characters long"],
-        select: false // Don't return password by default in queries
-    },
-    role: {
-        type: String,
-        enum: ["user"], // Only allow "user" role
-        default: "user"
-    },
-    isActive: {
-        type: Boolean,
-        default: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
+    {
+        timestamps: true,
     }
-}, {
-    timestamps: true // Automatically manages createdAt and updatedAt
-});
+);
 
-const USERSModel = mongoose.model("users", UserSchema);
-
-module.exports = USERSModel;
-
+module.exports = mongoose.model("User", UserSchema);

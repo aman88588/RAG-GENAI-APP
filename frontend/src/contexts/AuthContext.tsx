@@ -1,182 +1,78 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface User {
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface AuthUser {
   id: string;
   fullName: string;
   email: string;
-  role?: string;
-  isActive?: boolean;
   createdAt?: string;
-  updatedAt?: string;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (userData: User, token: string) => void;
+  login: (userData: AuthUser, token: string) => void;
   logout: () => void;
-  updateUser: (userData: User) => void;
 }
+
+// ─── Context ─────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+// ─── Provider ────────────────────────────────────────────────────────────────
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+const TOKEN_KEY = 'callinsight_token';
+const USER_KEY = 'callinsight_user';
+
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!user;
 
-  // Check authentication status on app load
+  /** Restore session from localStorage on app load */
   useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
-    setIsLoading(true);
-
     try {
-      // First try to get token from localStorage
-      const token = localStorage.getItem('chatdoc_token') || localStorage.getItem('token');
-
-      if (!token) {
-        // Check for demo session
-        const demoSession = localStorage.getItem('chatdoc_session');
-        if (demoSession) {
-          const sessionData = JSON.parse(demoSession);
-          setUser(sessionData.user);
-        }
-        setIsLoading(false);
-        return;
+      const stored = localStorage.getItem(USER_KEY);
+      const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('token');
+      if (stored && token) {
+        setUser(JSON.parse(stored));
       }
-
-      // Try to fetch user profile from backend
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_API}/api/v1/auth/profile`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.user) {
-            setUser(data.user);
-          } else {
-            throw new Error('Invalid response format');
-          }
-        } else if (response.status === 401) {
-          // Token is invalid/expired - this is expected, don't log as error
-          throw new Error('Token expired');
-        } else {
-          throw new Error('Failed to fetch profile');
-        }
-      } catch (backendError) {
-
-        if (!(backendError instanceof Error) || !backendError.message.includes('Token expired')) {
-          console.log('Backend not available, checking local storage...');
-        }
-        // Fallback to localStorage for demo mode
-        const demoSession = localStorage.getItem('chatdoc_session');
-        const storedUser = localStorage.getItem('user');
-
-        if (demoSession) {
-          const sessionData = JSON.parse(demoSession);
-          setUser(sessionData.user);
-        } else if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        } else {
-          // Token exists but no user data, clear invalid token
-          localStorage.removeItem('chatdoc_token');
-          localStorage.removeItem('token');
-        }
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    } catch {
+      // Corrupted storage — clear it
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(TOKEN_KEY);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const login = (userData: User, token: string) => {
+  const login = (userData: AuthUser, token: string) => {
     setUser(userData);
-    localStorage.setItem('chatdoc_token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-
-    // Also store in demo session format for compatibility
-    const sessionData = {
-      user: userData,
-      token: token,
-      signedInAt: new Date().toISOString()
-    };
-    localStorage.setItem('chatdoc_session', JSON.stringify(sessionData));
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(userData));
   };
 
-  const logout = async () => {
-    const token = localStorage.getItem('chatdoc_token') || localStorage.getItem('token');
-
-    // Try to logout from backend if token exists
-    if (token) {
-      try {
-        await fetch(`${import.meta.env.VITE_BACKEND_API}/api/v1/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      } catch (error) {
-        console.log('Backend logout failed, proceeding with local logout');
-      }
-    }
-
-    // Clear all auth data
+  const logout = () => {
     setUser(null);
-    localStorage.removeItem('chatdoc_token');
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    // Clean up any legacy keys
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('chatdoc_session');
-    localStorage.removeItem('chatdoc_users'); // Clear demo users too
-  };
-
-  const updateUser = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-
-    // Update demo session
-    const demoSession = localStorage.getItem('chatdoc_session');
-    if (demoSession) {
-      const sessionData = JSON.parse(demoSession);
-      sessionData.user = userData;
-      localStorage.setItem('chatdoc_session', JSON.stringify(sessionData));
-    }
-  };
-
-  const value: AuthContextType = {
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    logout,
-    updateUser,
+    localStorage.removeItem('callinsight_session');
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
